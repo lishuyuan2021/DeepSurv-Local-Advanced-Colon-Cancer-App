@@ -63,9 +63,9 @@ st.markdown("Developed via DeepSurv (Deep Learning) based on SEER database.")
 
 with st.sidebar:
     st.header("Patient Characteristics")
-    age = st.slider("Age (years)", 18, 100, 65)
-    nodes_pos = st.number_input("Regional Nodes Positive", 0, 50, 0)
-    nodes_exam = st.number_input("Regional Nodes Examined", 1, 100, 15)
+    age = st.slider("Age (years)", 18, 79, 60)
+    nodes_pos = st.number_input("Regional Nodes Positive", 0, 45, 0)
+    nodes_exam = st.number_input("Regional Nodes Examined", 1, 90, 15)
     
     sex = st.selectbox("Sex", ["Female", "Male"])
     race = st.selectbox("Race", ["Asian or Pacific Islander", "White", "Black", "American Indian/Alaska Native"])
