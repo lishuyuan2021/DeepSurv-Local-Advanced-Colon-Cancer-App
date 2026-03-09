@@ -58,8 +58,8 @@ model, scalers, bg_data, base_surv, feature_list = load_resources()
 # ==============================================================================
 # 3. 页面布局
 # ==============================================================================
-st.set_page_config(page_title="Individualized Prognosis Tool", layout="wide")
-st.title("🩺 Colorectal Cancer Individualized Prognosis Tool")
+st.set_page_config(page_title="DeepSurv-LACC Predictor", layout="wide")
+st.title("🩺 DeepSurv Local Advanced Colon Cancer Individualized Prognosis Tool")
 st.markdown("Developed via DeepSurv (Deep Learning) based on SEER database.")
 
 with st.sidebar:
