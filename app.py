@@ -133,7 +133,7 @@ if st.sidebar.button("🚀 Run Prognostic Analysis", type="primary"):
 
     # --- 新增：风险分层及指南导向建议 ---
     # 根据 R 算出: 60%分位点=59.329905, 80%分位点=90.154295
-    if relative_risk <= 59.329905:
+    if relative_risk <= 1.033277:
         risk_group = "Low Risk"
         group_color = "#28a745"  # 森林绿
         management = [
@@ -141,7 +141,7 @@ if st.sidebar.button("🚀 Run Prognostic Analysis", type="primary"):
             "💊 **Adjuvant Therapy:** Consider standard AC (Adjuvant Chemotherapy) based on NCCN guidelines.",
             "⚠️ **Strategy:** Maintain high treatment compliance; standard screening."
         ]
-    elif relative_risk <= 90.154295:
+    elif relative_risk <= 1.126486:
         risk_group = "Medium Risk"
         group_color = "#fd7e14"  # 琥珀橙
         management = [
