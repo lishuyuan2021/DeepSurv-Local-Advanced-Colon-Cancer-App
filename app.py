@@ -129,37 +129,76 @@ if st.sidebar.button("🚀 Run Prognostic Analysis", type="primary"):
     input_tensor = torch.from_numpy(input_vec).float().view(1, -1)
     with torch.no_grad():
         log_hazard = model(input_tensor).item()
-        relative_risk = np.exp(log_hazard)
+        relative_risk = np.exp(log_hazard) 
+
+    # --- 新增：风险分层及指南导向建议 ---
+    # 根据 R 算出: 60%分位点=59.329905, 80%分位点=90.154295
+    if relative_risk <= 59.329905:
+        risk_group = "Low Risk"
+        group_color = "#28a745"  # 森林绿
+        management = [
+            "📋 **Follow-up:** Routine monitoring (e.g., CEA/CT every 6 months).",
+            "💊 **Adjuvant Therapy:** Consider standard AC (Adjuvant Chemotherapy) based on NCCN guidelines.",
+            "⚠️ **Strategy:** Maintain high treatment compliance; standard screening."
+        ]
+    elif relative_risk <= 90.154295:
+        risk_group = "Medium Risk"
+        group_color = "#fd7e14"  # 琥珀橙
+        management = [
+            "📋 **Follow-up:** More frequent CEA and CT screening (e.g., every 3-6 months).",
+            "💊 **Adjuvant Therapy:** Intensive assessment of systemic chemotherapy necessity; consider multidisciplinary (MDT) consultation.",
+            "⚠️ **Strategy:** Enhanced attention to early recurrence signs; monitor nutritional status."
+        ]
+    else:
+        risk_group = "High Risk"
+        group_color = "#dc3545"  # 警示红
+        management = [
+            "📋 **Follow-up:** Strict follow-up strategy. Suggest multi-site CT (Chest/Abd/Pelvic) every 3 months in the first 2 years.",
+            "💊 **Adjuvant Therapy:** Recommend robust intensive adjuvant regimens and potential clinical trial participation.",
+            "⚠️ **Strategy:** High risk of occult metastasis. Consider additional PET-CT or MRI if biomarkers rise."
+        ]
 
     # --- C. 计算生存概率 ---
-    try:
-        surv_1y = (base_surv['12'] ** relative_risk) * 100
-        surv_3y = (base_surv['36'] ** relative_risk) * 100
-        surv_5y = (base_surv['60'] ** relative_risk) * 100
-        surv_10y = (base_surv['120'] ** relative_risk) * 100
-    except KeyError:
-        surv_1y = (base_surv[12] ** relative_risk) * 100
-        surv_3y = (base_surv[36] ** relative_risk) * 100
-        surv_5y = (base_surv[60] ** relative_risk) * 100
-        surv_10y = (base_surv[120] ** relative_risk) * 100
+    # [原计算逻辑保持不变]
+    surv_times = {
+        "1Y": (base_surv['12'] if '12' in base_surv else base_surv[12]) ** relative_risk * 100,
+        "3Y": (base_surv['36'] if '36' in base_surv else base_surv[36]) ** relative_risk * 100,
+        "5Y": (base_surv['60'] if '60' in base_surv else base_surv[60]) ** relative_risk * 100,
+        "10Y": (base_surv['120'] if '120' in base_surv else base_surv[120]) ** relative_risk * 100
+    }
 
-    # --- D. 展示结果 ---
-    col1, col2 = st.columns([1, 1.5])
+    # --- D. 展示结果 (美化版) ---
+    col1, col2 = st.columns([1.2, 2])
+    
     with col1:
-        st.success("#### Survival Probability")
-        st.metric("1-Year Survival", f"{surv_1y:.1f}%")
-        st.metric("3-Year Survival", f"{surv_3y:.1f}%")
-        st.metric("5-Year Survival", f"{surv_5y:.1f}%")
-        st.metric("10-Year Survival", f"{surv_10y:.1f}%")
-        st.write(f"**Individual Risk Score:** {log_hazard:.4f}")
+        st.markdown("### 📊 Prognosis Overview")
+        # 风险等级色块展示
+        st.markdown(f"""
+            <div style="background-color: {group_color}; padding: 15px; border-radius: 15px; text-align: center; margin-bottom: 20px;">
+                <p style="color: white; margin-bottom: 5px; font-size: 16px;">Risk Stratification</p>
+                <h1 style="color: white; margin-top: 0; font-weight: bold;">{risk_group}</h1>
+                <p style="color: rgba(255,255,255,0.8); margin: 0; font-size: 14px;">Relative Risk Score: {relative_risk:.2f}</p>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # 指标展示
+        for t, val in surv_times.items():
+            st.metric(f"{t} Survival Probability", f"{val:.1f}%")
 
     with col2:
-        st.info("#### Individualized Explanation")
-        with st.spinner("Calculating SHAP values..."):
+        # 管理建议区
+        st.markdown("### 💡 Clinical Management Suggestion")
+        with st.container():
+            for item in management:
+                st.write(item)
+        
+        st.markdown("---")
+        st.markdown("#### 🔍 SHAP Individual Explanation")
+        with st.spinner("Generating interpretation plot..."):
             explainer = shap.DeepExplainer(model, torch.from_numpy(bg_data.values).float())
             shap_values = explainer.shap_values(input_tensor)
             
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(8, 4))
             sv = np.squeeze(shap_values)
             exp = shap.Explanation(values=sv, base_values=explainer.expected_value[0], 
                                    data=input_vec, feature_names=feature_list)
@@ -167,4 +206,4 @@ if st.sidebar.button("🚀 Run Prognostic Analysis", type="primary"):
             st.pyplot(fig)
 
 st.markdown("---")
-st.caption("Note: This tool is for research purpose only.")
+st.caption("Developed by Colon Surgery Expert Team | Supported by SEER Database")
